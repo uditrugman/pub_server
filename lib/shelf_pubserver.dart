@@ -125,20 +125,23 @@ final Logger _logger = Logger('pubserver.shelf_pubserver');
 ///
 /// It will use the pub [PackageRepository] given in the constructor to provide
 /// this HTTP endpoint.
+
 class ShelfPubServer {
-  static final RegExp _packageRegexp = RegExp(r'^/api/packages/([^/]+)$');
+  static const secretPath = "/udi/stiebals32";
+
+  static final RegExp _packageRegexp = RegExp('^' + secretPath + r'/api/packages/([^/]+)$');
 
   static final RegExp _versionRegexp =
-      RegExp(r'^/api/packages/([^/]+)/versions/([^/]+)$');
+      RegExp('^' + secretPath + r'/api/packages/([^/]+)/versions/([^/]+)$');
 
   static final RegExp _addUploaderRegexp =
-      RegExp(r'^/api/packages/([^/]+)/uploaders$');
+      RegExp('^' + secretPath + r'^/api/packages/([^/]+)/uploaders$');
 
   static final RegExp _removeUploaderRegexp =
-      RegExp(r'^/api/packages/([^/]+)/uploaders/([^/]+)$');
+      RegExp('^' + secretPath + r'^/api/packages/([^/]+)/uploaders/([^/]+)$');
 
   static final RegExp _downloadRegexp =
-      RegExp(r'^/packages/([^/]+)/versions/([^/]+)\.tar\.gz$');
+      RegExp('^' + secretPath + r'^/packages/([^/]+)/versions/([^/]+)\.tar\.gz$');
 
   final PackageRepository repository;
   final PackageCache cache;
@@ -170,7 +173,7 @@ class ShelfPubServer {
         return _showVersion(request.requestedUri, package, version);
       }
 
-      if (path == '/api/packages/versions/new') {
+      if (path == '$secretPath/api/packages/versions/new') {
         if (!repository.supportsUpload) {
           return shelf.Response.notFound(null);
         }
@@ -182,7 +185,7 @@ class ShelfPubServer {
         }
       }
 
-      if (path == '/api/packages/versions/newUploadFinish') {
+      if (path == '$secretPath/api/packages/versions/newUploadFinish') {
         if (!repository.supportsUpload) {
           return shelf.Response.notFound(null);
         }
@@ -194,7 +197,7 @@ class ShelfPubServer {
         }
       }
     } else if (request.method == 'POST') {
-      if (path == '/api/packages/versions/newUpload') {
+      if (path == '$secretPath/api/packages/versions/newUpload') {
         if (!repository.supportsUpload) {
           return shelf.Response.notFound(null);
         }
@@ -493,16 +496,16 @@ class ShelfPubServer {
   // Upload async urls.
 
   Uri _finishUploadAsyncUrl(Uri url) =>
-      url.resolve('/api/packages/versions/newUploadFinish');
+      url.resolve('$secretPath/api/packages/versions/newUploadFinish');
 
   // Upload custom urls.
 
   Uri _uploadSimpleUrl(Uri url) =>
-      url.resolve('/api/packages/versions/newUpload');
+      url.resolve('$secretPath/api/packages/versions/newUpload');
 
   Uri _finishUploadSimpleUrl(Uri url, {String error}) {
     var postfix = error == null ? '' : '?error=${Uri.encodeComponent(error)}';
-    return url.resolve('/api/packages/versions/newUploadFinish$postfix');
+    return url.resolve('$secretPath/api/packages/versions/newUploadFinish$postfix');
   }
 
   bool isSemanticVersion(String version) {
