@@ -481,7 +481,7 @@ class ShelfPubServer {
 
   Uri _downloadUrl(Uri url, String package, String version) {
     var encode = Uri.encodeComponent;
-    return _publicUri(url.resolve('/packages/${encode(package)}/versions/${encode(version)}.tar.gz'));
+    return _publicUri(url.resolve('$secretPath/packages/${encode(package)}/versions/${encode(version)}.tar.gz'));
   }
 
   // Upload async urls.
