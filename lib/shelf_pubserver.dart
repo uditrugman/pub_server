@@ -133,11 +133,11 @@ class ShelfPubServer {
 
   static final RegExp _versionRegexp = RegExp('^' + secretPath + r'/api/packages/([^/]+)/versions/([^/]+)$');
 
-  static final RegExp _addUploaderRegexp = RegExp('^' + secretPath + r'^/api/packages/([^/]+)/uploaders$');
+  static final RegExp _addUploaderRegexp = RegExp('^' + secretPath + r'/api/packages/([^/]+)/uploaders$');
 
-  static final RegExp _removeUploaderRegexp = RegExp('^' + secretPath + r'^/api/packages/([^/]+)/uploaders/([^/]+)$');
+  static final RegExp _removeUploaderRegexp = RegExp('^' + secretPath + r'/api/packages/([^/]+)/uploaders/([^/]+)$');
 
-  static final RegExp _downloadRegexp = RegExp('^' + secretPath + r'^/packages/([^/]+)/versions/([^/]+)\.tar\.gz$');
+  static final RegExp _downloadRegexp = RegExp('^' + secretPath + r'/packages/([^/]+)/versions/([^/]+)\.tar\.gz$');
 
   final PackageRepository repository;
   final PackageCache cache;
