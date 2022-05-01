@@ -131,22 +131,27 @@ class ShelfPubServer {
 
   static final RegExp _packageRegexp = RegExp('^' + secretPath + r'/api/packages/([^/]+)$');
 
-  static final RegExp _versionRegexp =
-      RegExp('^' + secretPath + r'/api/packages/([^/]+)/versions/([^/]+)$');
+  static final RegExp _versionRegexp = RegExp('^' + secretPath + r'/api/packages/([^/]+)/versions/([^/]+)$');
 
-  static final RegExp _addUploaderRegexp =
-      RegExp('^' + secretPath + r'^/api/packages/([^/]+)/uploaders$');
+  static final RegExp _addUploaderRegexp = RegExp('^' + secretPath + r'^/api/packages/([^/]+)/uploaders$');
 
-  static final RegExp _removeUploaderRegexp =
-      RegExp('^' + secretPath + r'^/api/packages/([^/]+)/uploaders/([^/]+)$');
+  static final RegExp _removeUploaderRegexp = RegExp('^' + secretPath + r'^/api/packages/([^/]+)/uploaders/([^/]+)$');
 
-  static final RegExp _downloadRegexp =
-      RegExp('^' + secretPath + r'^/packages/([^/]+)/versions/([^/]+)\.tar\.gz$');
+  static final RegExp _downloadRegexp = RegExp('^' + secretPath + r'^/packages/([^/]+)/versions/([^/]+)\.tar\.gz$');
 
   final PackageRepository repository;
   final PackageCache cache;
+  final String publicScheme;
+  final String publicHost;
+  final int publicPort;
 
-  ShelfPubServer(this.repository, {this.cache});
+  ShelfPubServer(
+    this.repository, {
+    this.publicScheme,
+    this.publicHost,
+    this.publicPort,
+    this.cache,
+  });
 
   Future<shelf.Response> requestHandler(shelf.Request request) async {
     var path = request.requestedUri.path;
@@ -202,8 +207,7 @@ class ShelfPubServer {
           return shelf.Response.notFound(null);
         }
 
-        return _uploadSimple(request.requestedUri,
-            request.headers['content-type'], request.read());
+        return _uploadSimple(request.requestedUri, request.headers['content-type'], request.read());
       } else {
         if (!repository.supportsUploaders) {
           return shelf.Response.notFound(null);
@@ -252,8 +256,7 @@ class ShelfPubServer {
     // TODO: Add legacy entries (if necessary), such as version_url.
     Map packageVersion2Json(PackageVersion version) {
       return {
-        'archive_url':
-            '${_downloadUrl(uri, version.packageName, version.versionString)}',
+        'archive_url': '${_downloadUrl(uri, version.packageName, version.versionString)}',
         'pubspec': loadYaml(version.pubspecYaml),
         'version': version.versionString,
       };
@@ -280,8 +283,7 @@ class ShelfPubServer {
     return _binaryJsonResponse(binaryJson);
   }
 
-  Future<shelf.Response> _showVersion(
-      Uri uri, String package, String version) async {
+  Future<shelf.Response> _showVersion(Uri uri, String package, String version) async {
     var ver = await repository.lookupVersion(package, version);
     if (ver == null) {
       return shelf.Response.notFound(null);
@@ -297,8 +299,7 @@ class ShelfPubServer {
 
   // Download handlers.
 
-  Future<shelf.Response> _download(
-      Uri uri, String package, String version) async {
+  Future<shelf.Response> _download(Uri uri, String package, String version) async {
     if (repository.supportsDownloadUrl) {
       var url = await repository.downloadUrl(package, version);
       // This is a redirect to [url]
@@ -358,15 +359,13 @@ class ShelfPubServer {
     });
   }
 
-  Future<shelf.Response> _uploadSimple(
-      Uri uri, String contentType, Stream<List<int>> stream) async {
+  Future<shelf.Response> _uploadSimple(Uri uri, String contentType, Stream<List<int>> stream) async {
     _logger.info('Perform simple upload.');
 
     var boundary = _getBoundary(contentType);
 
     if (boundary == null) {
-      return _badRequest(
-          'Upload must contain a multipart/form-data content type.');
+      return _badRequest('Upload must contain a multipart/form-data content type.');
     }
 
     // We have to listen to all multiparts: Just doing `parts.first` will
@@ -376,8 +375,7 @@ class ShelfPubServer {
     //     parts.expect(1).then((part) { upload(part); })
     MimeMultipart thePart;
 
-    await for (MimeMultipart part
-        in stream.transform(MimeMultipartTransformer(boundary))) {
+    await for (MimeMultipart part in stream.transform(MimeMultipartTransformer(boundary))) {
       // If we get more than one part, we'll ignore the rest of the input.
       if (thePart != null) {
         continue;
@@ -399,8 +397,7 @@ class ShelfPubServer {
     } catch (error, stack) {
       _logger.warning('Error occured', error, stack);
       // TODO: Do error checking and return error codes?
-      return shelf.Response.found(
-          _finishUploadSimpleUrl(uri, error: error.toString()));
+      return shelf.Response.found(_finishUploadSimpleUrl(uri, error: error.toString()));
     }
   }
 
@@ -425,8 +422,7 @@ class ShelfPubServer {
         await repository.addUploader(package, user);
         return _successfullRequest('Successfully added uploader to package.');
       } on UploaderAlreadyExistsException {
-        return _badRequest(
-            'Cannot add an already-existent uploader to package.');
+        return _badRequest('Cannot add an already-existent uploader to package.');
       } on UnauthorizedAccessException {
         return _unauthorizedRequest();
       } on GenericProcessingException catch (e) {
@@ -436,8 +432,7 @@ class ShelfPubServer {
     return _badRequest('Invalid request');
   }
 
-  Future<shelf.Response> removeUploader(
-      String package, String userEmail) async {
+  Future<shelf.Response> removeUploader(String package, String userEmail) async {
     try {
       await repository.removeUploader(package, userEmail);
       return _successfullRequest('Successfully removed uploader from package.');
@@ -452,8 +447,7 @@ class ShelfPubServer {
 
   // Helper functions.
 
-  shelf.Response _invalidVersion(String version) =>
-      _badRequest('Version string "$version" is not a valid semantic version.');
+  shelf.Response _invalidVersion(String version) => _badRequest('Version string "$version" is not a valid semantic version.');
 
   Future<shelf.Response> _successfullRequest(String message) async {
     return shelf.Response(200,
@@ -475,37 +469,32 @@ class ShelfPubServer {
       }),
       headers: {'content-type': 'application/json'});
 
-  shelf.Response _binaryJsonResponse(List<int> d, {int status = 200}) =>
-      shelf.Response(status,
-          body: Stream.fromIterable([d]),
-          headers: {'content-type': 'application/json'});
+  shelf.Response _binaryJsonResponse(List<int> d, {int status = 200}) => shelf.Response(status, body: Stream.fromIterable([d]), headers: {'content-type': 'application/json'});
 
-  shelf.Response _jsonResponse(Map json, {int status = 200}) =>
-      shelf.Response(status,
-          body: convert.json.encode(json),
-          headers: {'content-type': 'application/json'});
+  shelf.Response _jsonResponse(Map json, {int status = 200}) => shelf.Response(status, body: convert.json.encode(json), headers: {'content-type': 'application/json'});
 
   // Download urls.
 
+  Uri _publicUri(Uri uri) {
+    return uri.replace(scheme: publicScheme, host: publicHost, port: publicPort);
+  }
+
   Uri _downloadUrl(Uri url, String package, String version) {
     var encode = Uri.encodeComponent;
-    return url.resolve(
-        '/packages/${encode(package)}/versions/${encode(version)}.tar.gz');
+    return _publicUri(url.resolve('/packages/${encode(package)}/versions/${encode(version)}.tar.gz'));
   }
 
   // Upload async urls.
 
-  Uri _finishUploadAsyncUrl(Uri url) =>
-      url.resolve('$secretPath/api/packages/versions/newUploadFinish');
+  Uri _finishUploadAsyncUrl(Uri url) => _publicUri(url.resolve('$secretPath/api/packages/versions/newUploadFinish'));
 
   // Upload custom urls.
 
-  Uri _uploadSimpleUrl(Uri url) =>
-      url.resolve('$secretPath/api/packages/versions/newUpload');
+  Uri _uploadSimpleUrl(Uri url) => _publicUri(url.resolve('$secretPath/api/packages/versions/newUpload'));
 
   Uri _finishUploadSimpleUrl(Uri url, {String error}) {
     var postfix = error == null ? '' : '?error=${Uri.encodeComponent(error)}';
-    return url.resolve('$secretPath/api/packages/versions/newUploadFinish$postfix');
+    return _publicUri(url.resolve('$secretPath/api/packages/versions/newUploadFinish$postfix'));
   }
 
   bool isSemanticVersion(String version) {

@@ -44,7 +44,7 @@ Future<HttpServer> runPubServer(
   var remote = HttpProxyRepository(client, pubDartLangOrg);
   var cow = CopyAndWriteRepository(local, remote, standalone);
 
-  var server = ShelfPubServer(cow);
+  var server = ShelfPubServer(cow, publicScheme: "https", publicHost: "pub.trugman.com", publicPort: 443);
   print('Listening on http://$host:$port\n'
       '\n'
       'To make the pub client use this repository configure your shell via:\n'
