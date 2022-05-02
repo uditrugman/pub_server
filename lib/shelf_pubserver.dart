@@ -127,7 +127,8 @@ final Logger _logger = Logger('pubserver.shelf_pubserver');
 /// this HTTP endpoint.
 
 class ShelfPubServer {
-  static const secretPath = "/udi/stiebals32";
+  // static const secretPath = "/udi/stiebals32";
+  static const secretPath = "";
 
   static final RegExp _packageRegexp = RegExp('^' + secretPath + r'/api/packages/([^/]+)$');
 
